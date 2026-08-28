@@ -96,10 +96,15 @@
        PANTALLA 1B: Cuestionario (antes del tablero)
   ════════════════════════════════════════════════════ -->
   <div id="screen-encuesta" class="hidden min-h-screen flex flex-col bg-gray-100">
-    <header class="bg-udes-azul text-white px-4 py-3 shadow-md flex-shrink-0">
-      <p class="text-[10px] font-bold uppercase tracking-wider text-blue-200 leading-none mb-0.5">Tanque de Pensamiento Estratégico</p>
-          <h2 class="font-bold text-base leading-tight">Planeación Institucional UDES</h2>
-      <p id="encuesta-info" class="text-xs text-blue-200 mt-0.5"></p>
+    <header class="bg-udes-azul text-white px-4 py-3 shadow-md flex-shrink-0 flex items-center gap-3">
+      <img src="https://udes.edu.co/images/logo/logo-udes-sm.png"
+        alt="UDES" class="h-8 brightness-0 invert"
+        onerror="this.style.display='none'">
+      <div>
+        <p class="text-[10px] font-bold uppercase tracking-wider text-blue-200 leading-none mb-0.5">Tanque de Pensamiento Estratégico</p>
+        <h2 class="font-bold text-base leading-tight">Planeación Institucional UDES</h2>
+        <p id="encuesta-info" class="text-xs text-blue-200 mt-0.5"></p>
+      </div>
     </header>
 
     <main class="flex-1 overflow-y-auto p-4">
@@ -182,10 +187,15 @@
   ════════════════════════════════════════════════════ -->
   <div id="screen-resultados" class="hidden min-h-screen flex flex-col bg-gray-100">
     <header class="bg-udes-azul text-white px-4 py-3 shadow-md flex items-center justify-between flex-shrink-0">
-      <div>
-        <p class="text-[10px] font-bold uppercase tracking-wider text-blue-200 leading-none mb-0.5">Tanque de Pensamiento Estratégico</p>
-        <h2 class="font-bold text-base leading-tight">Resultados en vivo · UDES</h2>
-        <p id="resultados-subtitulo" class="text-xs text-blue-200 mt-0.5">Respuestas de todos los participantes</p>
+      <div class="flex items-center gap-3">
+        <img src="https://udes.edu.co/images/logo/logo-udes-sm.png"
+          alt="UDES" class="h-8 brightness-0 invert"
+          onerror="this.style.display='none'">
+        <div>
+          <p class="text-[10px] font-bold uppercase tracking-wider text-blue-200 leading-none mb-0.5">Tanque de Pensamiento Estratégico</p>
+          <h2 class="font-bold text-base leading-tight">Resultados en vivo · UDES</h2>
+          <p id="resultados-subtitulo" class="text-xs text-blue-200 mt-0.5">Respuestas de todos los participantes</p>
+        </div>
       </div>
       <div class="flex items-center gap-2">
         <span id="resultados-total" class="text-xs text-blue-200"></span>
@@ -245,6 +255,12 @@
     class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm">
 
+      <div class="text-center mb-4">
+        <img src="https://udes.edu.co/images/logo/udes-logo-principal.svg"
+          alt="Universidad de Santander UDES" class="h-10 mx-auto"
+          onerror="this.style.display='none'">
+      </div>
+
       <div class="flex items-center gap-2 mb-5">
         <div class="bg-udes-rojo rounded-full p-2">
           <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -281,10 +297,15 @@
 
     <!-- Header admin -->
     <header class="bg-udes-rojo text-white px-4 py-3 shadow-md flex items-center justify-between flex-shrink-0">
-      <div>
-        <p class="text-[10px] font-bold uppercase tracking-wider text-red-200 leading-none mb-0.5">Tanque de Pensamiento Estratégico</p>
-        <h2 class="font-bold text-base">Panel Administrador · UDES</h2>
-        <p class="text-xs text-red-200">Planeación Institucional — vista de diagnóstico</p>
+      <div class="flex items-center gap-3">
+        <img src="https://udes.edu.co/images/logo/logo-udes-sm.png"
+          alt="UDES" class="h-8 brightness-0 invert"
+          onerror="this.style.display='none'">
+        <div>
+          <p class="text-[10px] font-bold uppercase tracking-wider text-red-200 leading-none mb-0.5">Tanque de Pensamiento Estratégico</p>
+          <h2 class="font-bold text-base">Panel Administrador · UDES</h2>
+          <p class="text-xs text-red-200">Planeación Institucional — vista de diagnóstico</p>
+        </div>
       </div>
       <div class="flex items-center gap-3">
         <button id="btn-admin-refresh"

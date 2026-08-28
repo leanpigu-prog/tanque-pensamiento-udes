@@ -473,20 +473,30 @@ function mostrarResultados() {
   document.getElementById("screen-board").classList.add("hidden");
   document.getElementById("screen-resultados").classList.remove("hidden");
 
-  cargarResultados("resultados-charts", "resultados-total");
+  var subtitulo = document.getElementById("resultados-subtitulo");
+  if (subtitulo) subtitulo.textContent = "Respuestas de " + STATE.campus;
+
+  cargarResultados("resultados-charts", "resultados-total", { campus: STATE.campus });
   if (STATE.pollResultados) clearInterval(STATE.pollResultados);
   STATE.pollResultados = setInterval(function () {
-    cargarResultados("resultados-charts", "resultados-total");
+    cargarResultados("resultados-charts", "resultados-total", { campus: STATE.campus });
   }, CONFIG.POLL_INTERVAL);
 }
 
 // ── Carga, agregación y gráficas (compartido con el panel admin) ──────────────
+// `filtro` es opcional: { campus, rol } — si se omite, se agregan todos los campus.
 
-function cargarResultados(contenedorId, totalElId) {
+function cargarResultados(contenedorId, totalElId, filtro) {
   fetch(CONFIG.GAS_URL + "?action=getEncuesta")
     .then(function (res) { return res.json(); })
     .then(function (data) {
       var respuestas = data.respuestas || [];
+      if (filtro && filtro.campus) {
+        respuestas = respuestas.filter(function (r) { return r.campus === filtro.campus; });
+      }
+      if (filtro && filtro.rol) {
+        respuestas = respuestas.filter(function (r) { return r.rol === filtro.rol; });
+      }
       var agg = agregarResultados(respuestas);
       renderGraficas(contenedorId, agg, respuestas.length);
       var totalEl = document.getElementById(totalElId);

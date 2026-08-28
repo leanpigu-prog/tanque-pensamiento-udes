@@ -99,19 +99,30 @@ function mostrarPanelAdmin() {
   });
 
   cargarDatosAdmin();
-  cargarResultados("admin-resultados-charts", "admin-resultados-total");
+  cargarResultados("admin-resultados-charts", "admin-resultados-total", leerFiltrosAdmin());
 
   // Refresco en vivo de tarjetas y resultados del cuestionario
   if (STATE.pollResultados) clearInterval(STATE.pollResultados);
   STATE.pollResultados = setInterval(function () {
     cargarDatosAdmin();
-    cargarResultados("admin-resultados-charts", "admin-resultados-total");
+    cargarResultados("admin-resultados-charts", "admin-resultados-total", leerFiltrosAdmin());
   }, CONFIG.POLL_INTERVAL);
 
   document.getElementById("btn-admin-refresh").addEventListener("click", function () {
     cargarDatosAdmin();
-    cargarResultados("admin-resultados-charts", "admin-resultados-total");
+    cargarResultados("admin-resultados-charts", "admin-resultados-total", leerFiltrosAdmin());
   });
+}
+
+// Lee los filtros de Campus/Rol actualmente seleccionados en el panel admin,
+// para aplicarlos también a las gráficas de la encuesta (que no tiene "categoría").
+function leerFiltrosAdmin() {
+  var campusEl = document.getElementById("filter-campus");
+  var rolEl    = document.getElementById("filter-rol");
+  return {
+    campus: campusEl ? campusEl.value : "",
+    rol:    rolEl ? rolEl.value : ""
+  };
 }
 
 function cargarDatosAdmin() {
@@ -192,6 +203,9 @@ function aplicarFiltrosAdmin() {
   if (rol)       tarjetas = tarjetas.filter(function (t) { return t.rol === rol; });
 
   renderizarTablaAdmin(tarjetas);
+
+  // Las gráficas de la encuesta también se filtran por campus/rol (no tienen categoría)
+  cargarResultados("admin-resultados-charts", "admin-resultados-total", { campus: campus, rol: rol });
 }
 
 function renderizarTablaAdmin(tarjetas) {

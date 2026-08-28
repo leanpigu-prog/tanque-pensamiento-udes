@@ -566,11 +566,20 @@ function renderGraficas(contenedorId, agg, total) {
     var valores    = labels.map(function (op) { return data.conteo[op]; });
     var etiquetas  = labels.map(function (op) {
       var pct = data.total > 0 ? Math.round((data.conteo[op] / data.total) * 100) : 0;
-      return op + " (" + pct + "%)";
+      // Se envuelve en varias líneas (en vez de una sola línea larga) para que
+      // Chart.js no recorte el texto por la izquierda en pantallas angostas.
+      return envolverEtiqueta(op + " (" + pct + "%)", 26);
     });
     var colores    = labels.map(function (op) {
       return op === "Otra" ? "#c62828" : "#1a237e";
     });
+
+    // Alto del canvas según cuántas líneas necesita la etiqueta más larga,
+    // para que las etiquetas envueltas tengan espacio y no se amontonen.
+    var maxLineas = etiquetas.reduce(function (max, et) {
+      return Math.max(max, Array.isArray(et) ? et.length : 1);
+    }, 1);
+    var altoChart = labels.length * (20 + maxLineas * 13) + 30;
 
     // Crear la tarjeta + canvas la primera vez
     var card = document.getElementById("card_" + canvasId);
@@ -578,7 +587,7 @@ function renderGraficas(contenedorId, agg, total) {
       cont.insertAdjacentHTML("beforeend",
         '<div id="card_' + canvasId + '" class="bg-white rounded-2xl shadow-sm p-4">' +
           '<p class="font-semibold text-gray-800 text-sm mb-3">' + (i + 1) + ". " + escapeHtml(p.texto) + "</p>" +
-          '<canvas id="' + canvasId + '"></canvas>' +
+          '<div style="height:' + altoChart + 'px"><canvas id="' + canvasId + '"></canvas></div>' +
         "</div>");
     }
 
@@ -601,6 +610,7 @@ function renderGraficas(contenedorId, agg, total) {
         options: {
           indexAxis: "y",
           responsive: true,
+          maintainAspectRatio: false,
           plugins: {
             legend: { display: false },
             tooltip: {
@@ -620,6 +630,30 @@ function renderGraficas(contenedorId, agg, total) {
 }
 
 // ── Utilidades ────────────────────────────────────────────────────────────────
+
+// Divide un texto largo en varias líneas (array) por palabras completas, sin
+// pasarse de maxChars por línea. Si ya cabe en una línea, devuelve el string tal cual.
+// Chart.js acepta un array como etiqueta y lo dibuja en varias líneas.
+function envolverEtiqueta(texto, maxChars) {
+  if (texto.length <= maxChars) return texto;
+
+  var palabras = texto.split(" ");
+  var lineas = [];
+  var actual = "";
+
+  palabras.forEach(function (palabra) {
+    var candidato = actual ? actual + " " + palabra : palabra;
+    if (candidato.length > maxChars && actual) {
+      lineas.push(actual);
+      actual = palabra;
+    } else {
+      actual = candidato;
+    }
+  });
+  if (actual) lineas.push(actual);
+
+  return lineas;
+}
 
 function formatearFecha(iso) {
   if (!iso) return "";

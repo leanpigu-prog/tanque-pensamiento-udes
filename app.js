@@ -538,6 +538,17 @@ function renderGraficas(contenedorId, agg, total) {
     return;
   }
 
+  // Nota aclaratoria: las preguntas admiten varias opciones, así que los
+  // porcentajes de una misma pregunta pueden sumar más de 100%.
+  var notaId = contenedorId + "_nota";
+  if (!document.getElementById(notaId)) {
+    cont.insertAdjacentHTML("afterbegin",
+      '<p id="' + notaId + '" class="text-xs text-gray-400 italic px-1">' +
+      "Cada pregunta admite varias opciones, así que los porcentajes pueden sumar más de 100%. " +
+      "Los % indican el porcentaje de encuestados que marcó cada opción." +
+      "</p>");
+  }
+
   CONFIG.PREGUNTAS.forEach(function (p, i) {
     var data       = agg[p.id];
     var canvasId   = contenedorId + "_" + p.id;

@@ -4,9 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tanque de Pensamiento Estratégico · Planeación Institucional UDES</title>
+  <!-- Evita que el navegador cachee el HTML de esta página entre visitas -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <link rel="stylesheet" href="style.css">
+  <!--
+    ASSET_VERSION: cache-busting de style.css/config.js/app.js/admin.js.
+    Cada vez que se edite CUALQUIERA de esos 4 archivos y se publique, hay que
+    SUBIR este número (ej. v=3, v=4...) para que todos los celulares/navegadores
+    descarguen la versión nueva en vez de servir una copia vieja en caché.
+  -->
+  <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body class="bg-gray-100 min-h-screen font-sans">
 
@@ -423,8 +433,8 @@
   </div>
 
   <!-- Scripts -->
-  <script src="config.js"></script>
-  <script src="app.js"></script>
-  <script src="admin.js"></script>
+  <script src="config.js?v=2"></script>
+  <script src="app.js?v=2"></script>
+  <script src="admin.js?v=2"></script>
 </body>
 </html>

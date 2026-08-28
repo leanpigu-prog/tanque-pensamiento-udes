@@ -7,6 +7,7 @@ const STATE = {
   nombre: null,
   categoriaActiva: null,
   todasLasTarjetas: [],
+  tarjetasPropioCampus: [],
   votadosIds: new Set(),
   pollTimer: null,
   pollResultados: null
@@ -260,8 +261,16 @@ function cargarTarjetas() {
     .then(function (res) { return res.json(); })
     .then(function (data) {
       if (data.cards) {
-        STATE.todasLasTarjetas = data.cards;
-        renderizarTarjetas(data.cards);
+        // NO tocar STATE.todasLasTarjetas aquí: es compartido con admin.js
+        // (cargarDatosAdmin/aplicarFiltrosAdmin), que necesita SIEMPRE el set
+        // completo sin filtrar para que el admin pueda ver/filtrar cualquier
+        // campus. El participante filtra en un campo propio y separado.
+        var tarjetasDelCampus = data.cards.filter(function (t) {
+          return t.campus === STATE.campus;
+        });
+        STATE.tarjetasPropioCampus = tarjetasDelCampus;
+
+        renderizarTarjetas(tarjetasDelCampus);
         var lastUpdate = document.getElementById("last-update");
         lastUpdate.classList.remove("hidden");
         lastUpdate.textContent = "Actualizado " + formatearHora(new Date());
@@ -477,9 +486,12 @@ function mostrarResultados() {
   if (subtitulo) subtitulo.textContent = "Respuestas de " + STATE.campus;
 
   cargarResultados("resultados-charts", "resultados-total", { campus: STATE.campus });
+  cargarNubePalabras("resultados-nubes", { campus: STATE.campus });
+
   if (STATE.pollResultados) clearInterval(STATE.pollResultados);
   STATE.pollResultados = setInterval(function () {
     cargarResultados("resultados-charts", "resultados-total", { campus: STATE.campus });
+    cargarNubePalabras("resultados-nubes", { campus: STATE.campus });
   }, CONFIG.POLL_INTERVAL);
 }
 
@@ -626,6 +638,161 @@ function renderGraficas(contenedorId, agg, total) {
         }
       });
     }
+  });
+}
+
+// ── Nube de palabras por categoría (compartido con el panel admin) ───────────
+
+// Stopwords en español (artículos, pronombres, preposiciones, conjunciones y
+// formas comunes de ser/estar/haber) — se comparan en minúsculas y sin tildes
+// (ver normalizarPalabra) para que "más"/"mas" caigan en la misma entrada.
+var STOPWORDS_ES = new Set([
+  "a","al","algo","algunas","algunos","ante","antes","como","con","contra",
+  "cual","cuales","cuando","de","del","desde","donde","durante","e","el",
+  "ella","ellas","ellos","en","entre","era","eramos","eran","eras","eres",
+  "es","esa","esas","ese","eso","esos","esta","estaba","estaban","estado",
+  "estamos","estan","estar","estara","estaran","estas","este","esto",
+  "estos","estoy","fue","fuera","fueron","fui","fuimos","ha","habia",
+  "habian","han","has","hasta","hay","he","hemos","la","las","le","les",
+  "lo","los","mas","me","mi","mis","mismo","misma","mismos","mismas",
+  "mucho","muchos","muy","nada","ni","no","nos","nosotras","nosotros",
+  "nuestra","nuestras","nuestro","nuestros","o","os","otra","otras","otro",
+  "otros","para","pero","poco","por","porque","que","quien","quienes",
+  "se","sea","sean","ser","si","sin","sobre","sois","somos","son","soy",
+  "su","sus","suya","suyas","suyo","suyos","tambien","tanto","te","ti",
+  "tiene","tienen","tienes","todo","toda","todos","todas","tu","tus","tuya",
+  "tuyas","tuyo","tuyos","un","una","uno","unos","usted","ustedes",
+  "vosotras","vosotros","vuestra","vuestras","vuestro","vuestros","y","ya","yo"
+]);
+
+// Quita tildes y pasa a minúsculas — se usa SOLO como clave de comparación
+// (contra stopwords y para agrupar variantes con/sin tilde), nunca para mostrar.
+function normalizarPalabra(w) {
+  // Descompone en NFD (letra + diacrítico separado) y descarta los caracteres
+  // combinantes (código Unicode 0x0300–0x036F: tildes, diéresis, etc.) para
+  // comparar "más"/"mas", "educación"/"educacion", etc. como la misma palabra.
+  return w.normalize("NFD").split("").filter(function (ch) {
+    var codigo = ch.charCodeAt(0);
+    return codigo < 0x0300 || codigo > 0x036f;
+  }).join("").toLowerCase();
+}
+
+// Divide un texto libre en palabras: minúsculas, quita puntuación y cualquier
+// carácter que no sea letra (conserva tildes y ñ para mostrarlas tal cual).
+function extraerPalabras(texto) {
+  var limpio = (texto || "").toLowerCase()
+    .replace(/[^a-zàáâãäåèéêëìíîïòóôõöùúûüñç\s]/gi, " ");
+  return limpio.split(/\s+/).filter(Boolean);
+}
+
+// Cuenta frecuencias de palabras agrupadas por categoría a partir de un
+// array de tarjetas (mismo shape que llega de ?action=getCards).
+function contarFrecuenciasPorCategoria(tarjetas) {
+  var freq = {};
+  Object.keys(CONFIG.CATEGORIAS).forEach(function (key) { freq[key] = {}; });
+
+  tarjetas.forEach(function (t) {
+    var cat = t.categoria;
+    if (!freq[cat]) return; // categoría desconocida: se ignora
+
+    extraerPalabras(t.texto).forEach(function (palabra) {
+      if (palabra.length < 3) return;
+      var clave = normalizarPalabra(palabra);
+      if (STOPWORDS_ES.has(clave)) return;
+
+      if (!freq[cat][clave]) freq[cat][clave] = { display: palabra, count: 0 };
+      freq[cat][clave].count++;
+    });
+  });
+
+  return freq;
+}
+
+// Toma, por categoría, las top N palabras más frecuentes.
+function topPalabrasPorCategoria(freqPorCategoria, topN) {
+  topN = topN || 22;
+  var resultado = {};
+  Object.keys(freqPorCategoria).forEach(function (cat) {
+    var lista = Object.keys(freqPorCategoria[cat]).map(function (clave) {
+      var e = freqPorCategoria[cat][clave];
+      return { palabra: e.display, frecuencia: e.count };
+    });
+    lista.sort(function (a, b) { return b.frecuencia - a.frecuencia; });
+    resultado[cat] = lista.slice(0, topN);
+  });
+  return resultado;
+}
+
+// Escala lineal de frecuencia a tamaño de fuente (en rem), con min/max
+// propios de cada categoría (no global), rango 0.8rem–2.2rem.
+function mapearFrecuenciaATamano(frecuencia, min, max) {
+  var MIN_REM = 0.8, MAX_REM = 2.2;
+  if (max === min) return (MIN_REM + MAX_REM) / 2;
+  var ratio = (frecuencia - min) / (max - min);
+  return +(MIN_REM + ratio * (MAX_REM - MIN_REM)).toFixed(2);
+}
+
+// `filtro` opcional: { campus, rol, categoria } — misma convención que cargarResultados().
+function cargarNubePalabras(contenedorId, filtro) {
+  fetch(CONFIG.GAS_URL + "?action=getCards")
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      var tarjetas = data.cards || [];
+      if (filtro && filtro.campus) {
+        tarjetas = tarjetas.filter(function (t) { return t.campus === filtro.campus; });
+      }
+      if (filtro && filtro.rol) {
+        tarjetas = tarjetas.filter(function (t) { return t.rol === filtro.rol; });
+      }
+      if (filtro && filtro.categoria) {
+        tarjetas = tarjetas.filter(function (t) { return t.categoria === filtro.categoria; });
+      }
+
+      var freq = contarFrecuenciasPorCategoria(tarjetas);
+      var top  = topPalabrasPorCategoria(freq, 22);
+      renderNubes(contenedorId, top);
+    })
+    .catch(function (err) {
+      console.error("Error al cargar la nube de palabras:", err);
+    });
+}
+
+function renderNubes(contenedorId, topPorCategoria) {
+  var cont = document.getElementById(contenedorId);
+  if (!cont) return;
+  cont.innerHTML = "";
+
+  var hayPalabras = Object.keys(topPorCategoria).some(function (k) {
+    return topPorCategoria[k].length > 0;
+  });
+  if (!hayPalabras) {
+    cont.innerHTML =
+      '<p class="text-center text-gray-400 text-sm py-8">Aún no hay suficientes aportes ' +
+      "para generar la nube de palabras.</p>";
+    return;
+  }
+
+  Object.keys(CONFIG.CATEGORIAS).forEach(function (key) {
+    var cat   = CONFIG.CATEGORIAS[key];
+    var lista = topPorCategoria[key] || [];
+    if (lista.length === 0) return; // sin datos para esta categoría: queda oculta
+
+    var frecuencias = lista.map(function (p) { return p.frecuencia; });
+    var min = Math.min.apply(null, frecuencias);
+    var max = Math.max.apply(null, frecuencias);
+
+    var tagsHTML = lista.map(function (p) {
+      var tam = mapearFrecuenciaATamano(p.frecuencia, min, max);
+      return '<span class="nube-palabra" style="font-size:' + tam + 'rem; color:' + cat.borderColor + ';" ' +
+        'title="' + p.frecuencia + ' mención' + (p.frecuencia !== 1 ? "es" : "") + '">' +
+        escapeHtml(p.palabra) + "</span>";
+    }).join("");
+
+    cont.insertAdjacentHTML("beforeend",
+      '<div class="nube-categoria-card">' +
+        '<h4 class="nube-categoria-titulo">' + cat.emoji + " " + escapeHtml(cat.label) + "</h4>" +
+        '<div class="nube-contenedor">' + tagsHTML + "</div>" +
+      "</div>");
   });
 }
 

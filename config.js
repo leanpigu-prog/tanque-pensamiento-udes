@@ -26,7 +26,7 @@ const CONFIG = {
   PREGUNTAS: [
     {
       id: "p1",
-      texto: "¿Qué aspecto considera prioritario fortalecer en los jóvenes nortesantandereanos?",
+      texto: "¿Qué aspecto considera prioritario fortalecer en los jóvenes de la región?",
       opciones: [
         "Disciplina y liderazgo",
         "Bilingüismo",

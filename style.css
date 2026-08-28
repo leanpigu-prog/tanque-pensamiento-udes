@@ -176,6 +176,35 @@
   box-shadow: 0 0 0 2px rgba(26,35,126,0.15);
 }
 
+/* Nube de palabras por categoría */
+.nube-categoria-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+.nube-categoria-titulo {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 0.75rem;
+}
+
+.nube-contenedor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 0.7rem;
+}
+
+.nube-palabra {
+  font-weight: 600;
+  line-height: 1.25;
+  max-width: 100%;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
 /* Responsive */
 @media (max-width: 640px) {
   .board-column { width: 280px; min-width: 280px; }

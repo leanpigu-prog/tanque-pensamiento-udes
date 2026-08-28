@@ -100,28 +100,34 @@ function mostrarPanelAdmin() {
 
   cargarDatosAdmin();
   cargarResultados("admin-resultados-charts", "admin-resultados-total", leerFiltrosAdmin());
+  cargarNubePalabras("admin-nubes", leerFiltrosAdmin());
 
-  // Refresco en vivo de tarjetas y resultados del cuestionario
+  // Refresco en vivo de tarjetas, resultados del cuestionario y nube de palabras
   if (STATE.pollResultados) clearInterval(STATE.pollResultados);
   STATE.pollResultados = setInterval(function () {
     cargarDatosAdmin();
     cargarResultados("admin-resultados-charts", "admin-resultados-total", leerFiltrosAdmin());
+    cargarNubePalabras("admin-nubes", leerFiltrosAdmin());
   }, CONFIG.POLL_INTERVAL);
 
   document.getElementById("btn-admin-refresh").addEventListener("click", function () {
     cargarDatosAdmin();
     cargarResultados("admin-resultados-charts", "admin-resultados-total", leerFiltrosAdmin());
+    cargarNubePalabras("admin-nubes", leerFiltrosAdmin());
   });
 }
 
-// Lee los filtros de Campus/Rol actualmente seleccionados en el panel admin,
-// para aplicarlos también a las gráficas de la encuesta (que no tiene "categoría").
+// Lee los filtros de Campus/Rol/Categoría actualmente seleccionados en el panel
+// admin, para aplicarlos también a las gráficas de la encuesta y a la nube de
+// palabras (la encuesta ignora "categoria" porque no la tiene).
 function leerFiltrosAdmin() {
-  var campusEl = document.getElementById("filter-campus");
-  var rolEl    = document.getElementById("filter-rol");
+  var campusEl    = document.getElementById("filter-campus");
+  var rolEl       = document.getElementById("filter-rol");
+  var categoriaEl = document.getElementById("filter-categoria");
   return {
-    campus: campusEl ? campusEl.value : "",
-    rol:    rolEl ? rolEl.value : ""
+    campus:    campusEl    ? campusEl.value    : "",
+    rol:       rolEl       ? rolEl.value       : "",
+    categoria: categoriaEl ? categoriaEl.value : ""
   };
 }
 
@@ -206,6 +212,10 @@ function aplicarFiltrosAdmin() {
 
   // Las gráficas de la encuesta también se filtran por campus/rol (no tienen categoría)
   cargarResultados("admin-resultados-charts", "admin-resultados-total", { campus: campus, rol: rol });
+
+  // La nube de palabras sí admite categoría (si se filtra una sola, las demás
+  // quedan ocultas de forma natural al no tener tarjetas)
+  cargarNubePalabras("admin-nubes", { campus: campus, rol: rol, categoria: categoria });
 }
 
 function renderizarTablaAdmin(tarjetas) {

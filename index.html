@@ -8,15 +8,49 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!--
+    FIX ANDROID: Tailwind ahora se carga desde archivo local (no CDN externo).
+    El Play CDN (cdn.tailwindcss.com) era bloqueado por DuckDuckGo y otros
+    navegadores Android con protección de privacidad, causando que la interfaz
+    no cargara correctamente. El archivo local tailwind.min.css se sirve desde
+    Vercel y nunca puede ser bloqueado.
+  -->
+  <link rel="stylesheet" href="tailwind.min.css?v=1">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
   <!--
     ASSET_VERSION: cache-busting de style.css/config.js/app.js/admin.js.
     Cada vez que se edite CUALQUIERA de esos 4 archivos y se publique, hay que
-    SUBIR este número (ej. v=3, v=4...) para que todos los celulares/navegadores
+    SUBIR este número (ej. v=4, v=5...) para que todos los celulares/navegadores
     descarguen la versión nueva en vez de servir una copia vieja en caché.
   -->
-  <link rel="stylesheet" href="style.css?v=2">
+  <link rel="stylesheet" href="style.css?v=3">
+
+  <!-- RESPALDO AUTO-RECARGA: si los estilos no cargaron (fallo de red, caché rota),
+       detecta el problema y recarga una sola vez por sesión de pestaña. -->
+  <script>
+  (function () {
+    var KEY = '_udes_css_check_v3';
+    var retries = parseInt(sessionStorage.getItem(KEY) || '0');
+    if (retries >= 2) return; // máximo 2 recargas automáticas por sesión
+
+    window.addEventListener('load', function () {
+      // Probar si Tailwind CSS aplicó la clase "hidden" correctamente (display:none)
+      var probe = document.createElement('div');
+      probe.className = 'hidden';
+      document.body.appendChild(probe);
+      var cargado = window.getComputedStyle(probe).display === 'none';
+      document.body.removeChild(probe);
+
+      if (!cargado) {
+        // Los estilos no cargaron → recargar con caché limpia
+        try { sessionStorage.setItem(KEY, String(retries + 1)); } catch (e) {}
+        location.reload(true);
+      }
+    });
+  })();
+  </script>
 </head>
 <body class="bg-gray-100 min-h-screen font-sans">
 
@@ -433,8 +467,8 @@
   </div>
 
   <!-- Scripts -->
-  <script src="config.js?v=2"></script>
-  <script src="app.js?v=2"></script>
-  <script src="admin.js?v=2"></script>
+  <script src="config.js?v=3"></script>
+  <script src="app.js?v=3"></script>
+  <script src="admin.js?v=3"></script>
 </body>
 </html>

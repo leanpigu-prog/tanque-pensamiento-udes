@@ -209,3 +209,7 @@
 @media (max-width: 640px) {
   .board-column { width: 280px; min-width: 280px; }
 }
+
+/* Parche Tailwind v2 → v3: clases con valores arbitrarios no incluidas en el prebuilt.
+   Agregar aquí cualquier clase text-[Xpx] adicional que se use en el HTML. */
+.text-\[10px\] { font-size: 10px; line-height: 1.5; }

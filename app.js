@@ -10,7 +10,8 @@ const STATE = {
   tarjetasPropioCampus: [],
   votadosIds: new Set(),
   pollTimer: null,
-  pollResultados: null
+  pollResultados: null,
+  resultadosOrigen: "board" // "board" | "config"
 };
 
 // Instancias de Chart.js activas, indexadas por id de canvas (para destruir al re-renderizar)
@@ -22,6 +23,7 @@ document.addEventListener("DOMContentLoaded", function () {
   configurarModal();
   configurarEncuesta();
   configurarResultados();
+  configurarBotonResultadosPublicos();
   cargarVotosDesdeStorage();
 });
 
@@ -474,11 +476,38 @@ function configurarResultados() {
   if (btnVolver) btnVolver.addEventListener("click", function () {
     if (STATE.pollResultados) { clearInterval(STATE.pollResultados); STATE.pollResultados = null; }
     document.getElementById("screen-resultados").classList.add("hidden");
-    document.getElementById("screen-board").classList.remove("hidden");
+    if (STATE.resultadosOrigen === "config") {
+      document.getElementById("screen-config").classList.remove("hidden");
+    } else {
+      document.getElementById("screen-board").classList.remove("hidden");
+    }
+  });
+}
+
+function configurarBotonResultadosPublicos() {
+  var btn = document.getElementById("btn-resultados-publicos");
+  if (!btn) return;
+  btn.addEventListener("click", function () {
+    STATE.resultadosOrigen = "config";
+    document.getElementById("screen-config").classList.add("hidden");
+    document.getElementById("screen-resultados").classList.remove("hidden");
+
+    var subtitulo = document.getElementById("resultados-subtitulo");
+    if (subtitulo) subtitulo.textContent = "Resultados de todos los campus";
+
+    cargarResultados("resultados-charts", "resultados-total", {});
+    cargarNubePalabras("resultados-nubes", {});
+
+    if (STATE.pollResultados) clearInterval(STATE.pollResultados);
+    STATE.pollResultados = setInterval(function () {
+      cargarResultados("resultados-charts", "resultados-total", {});
+      cargarNubePalabras("resultados-nubes", {});
+    }, CONFIG.POLL_INTERVAL);
   });
 }
 
 function mostrarResultados() {
+  STATE.resultadosOrigen = "board";
   document.getElementById("screen-board").classList.add("hidden");
   document.getElementById("screen-resultados").classList.remove("hidden");
 

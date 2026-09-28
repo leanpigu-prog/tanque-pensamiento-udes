@@ -101,6 +101,7 @@ function mostrarPanelAdmin() {
   cargarDatosAdmin();
   cargarResultados("admin-resultados-charts", "admin-resultados-total", leerFiltrosAdmin());
   cargarNubePalabras("admin-nubes", leerFiltrosAdmin());
+  configurarBotonesExport();
 
   // Refresco en vivo de tarjetas, resultados del cuestionario y nube de palabras
   if (STATE.pollResultados) clearInterval(STATE.pollResultados);
@@ -268,6 +269,132 @@ function renderizarTablaAdmin(tarjetas) {
     if (btnEliminar) eliminarTarjeta(btnEliminar.getAttribute("data-id"));
     if (btnMover)    moverTarjeta(btnMover.getAttribute("data-id"));
   });
+}
+
+// ── Exportación CSV ──────────────────────────────────────────────────────────
+
+function generarCSV(cabeceras, filas) {
+  function escaparCelda(val) {
+    var s = val === null || val === undefined ? "" : String(val);
+    if (s.indexOf(",") !== -1 || s.indexOf('"') !== -1 || s.indexOf("\n") !== -1 || s.indexOf("\r") !== -1) {
+      return '"' + s.replace(/"/g, '""') + '"';
+    }
+    return s;
+  }
+  var lineas = [cabeceras.map(escaparCelda).join(",")];
+  filas.forEach(function (fila) {
+    lineas.push(fila.map(escaparCelda).join(","));
+  });
+  return "﻿" + lineas.join("\r\n");
+}
+
+function descargarArchivo(contenido, nombre, tipo) {
+  var blob = new Blob([contenido], { type: tipo });
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement("a");
+  a.href     = url;
+  a.download = nombre;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function obtenerTarjetasFiltradas() {
+  var campus    = document.getElementById("filter-campus").value;
+  var categoria = document.getElementById("filter-categoria").value;
+  var rol       = document.getElementById("filter-rol").value;
+  var tarjetas  = STATE.todasLasTarjetas.slice();
+  if (campus)    tarjetas = tarjetas.filter(function (t) { return t.campus === campus; });
+  if (categoria) tarjetas = tarjetas.filter(function (t) { return t.categoria === categoria; });
+  if (rol)       tarjetas = tarjetas.filter(function (t) { return t.rol === rol; });
+  return tarjetas;
+}
+
+function descargarCSVTarjetas() {
+  var tarjetas = obtenerTarjetasFiltradas();
+  if (tarjetas.length === 0) {
+    alert("No hay tarjetas para los filtros seleccionados.");
+    return;
+  }
+
+  var cabeceras = ["Fecha", "Campus", "Rol", "Nombre", "Categoria", "Categoria_clave", "Aporte", "Votos"];
+  var filas = tarjetas.map(function (t) {
+    var cat = CONFIG.CATEGORIAS[t.categoria] || { label: t.categoria };
+    return [
+      t.timestamp ? new Date(t.timestamp).toLocaleString("es-CO") : "",
+      t.campus,
+      t.rol,
+      t.nombre || "Anonimo",
+      cat.label,
+      t.categoria,
+      t.texto,
+      t.votos || 0
+    ];
+  });
+
+  var hoy = new Date().toISOString().slice(0, 10);
+  descargarArchivo(generarCSV(cabeceras, filas), "tarjetas_UDES_" + hoy + ".csv", "text/csv;charset=utf-8;");
+}
+
+function descargarCSVEncuesta() {
+  var btn = document.getElementById("btn-export-encuesta");
+  btn.disabled = true;
+  btn.textContent = "Descargando...";
+
+  var campus = document.getElementById("filter-campus").value;
+  var rol    = document.getElementById("filter-rol").value;
+
+  fetch(CONFIG.GAS_URL + "?action=getEncuesta")
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      var respuestas = data.respuestas || [];
+      if (campus) respuestas = respuestas.filter(function (r) { return r.campus === campus; });
+      if (rol)    respuestas = respuestas.filter(function (r) { return r.rol === rol; });
+
+      if (respuestas.length === 0) {
+        alert("No hay respuestas para los filtros seleccionados.");
+        btn.disabled = false;
+        btn.textContent = "⬇ CSV Cuestionario";
+        return;
+      }
+
+      var p = CONFIG.PREGUNTAS;
+      var cabeceras = [
+        "Fecha", "Campus", "Rol", "Nombre",
+        "P1_" + (p[0] ? p[0].texto.slice(0, 45) : "p1"),
+        "P2_" + (p[1] ? p[1].texto.slice(0, 45) : "p2"),
+        "P3_" + (p[2] ? p[2].texto.slice(0, 45) : "p3")
+      ];
+      var filas = respuestas.map(function (r) {
+        return [
+          r.timestamp ? new Date(r.timestamp).toLocaleString("es-CO") : "",
+          r.campus,
+          r.rol,
+          r.nombre || "Anonimo",
+          (r.p1 || []).join("; "),
+          (r.p2 || []).join("; "),
+          (r.p3 || []).join("; ")
+        ];
+      });
+
+      var hoy = new Date().toISOString().slice(0, 10);
+      descargarArchivo(generarCSV(cabeceras, filas), "encuesta_UDES_" + hoy + ".csv", "text/csv;charset=utf-8;");
+      btn.disabled = false;
+      btn.textContent = "⬇ CSV Cuestionario";
+    })
+    .catch(function () {
+      alert("Error al conectar con el servidor. Intenta de nuevo.");
+      btn.disabled = false;
+      btn.textContent = "⬇ CSV Cuestionario";
+    });
+}
+
+function configurarBotonesExport() {
+  var btnT = document.getElementById("btn-export-tarjetas");
+  var btnE = document.getElementById("btn-export-encuesta");
+  if (btnT) btnT.onclick = descargarCSVTarjetas;
+  if (btnE) btnE.onclick = descargarCSVEncuesta;
 }
 
 // ── Salir del panel admin ─────────────────────────────────────────────────────

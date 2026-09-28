@@ -25,13 +25,13 @@
     SUBIR este número (ej. v=4, v=5...) para que todos los celulares/navegadores
     descarguen la versión nueva en vez de servir una copia vieja en caché.
   -->
-  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="stylesheet" href="style.css?v=4">
 
   <!-- RESPALDO AUTO-RECARGA: si los estilos no cargaron (fallo de red, caché rota),
        detecta el problema y recarga una sola vez por sesión de pestaña. -->
   <script>
   (function () {
-    var KEY = '_udes_css_check_v3';
+    var KEY = '_udes_css_check_v4';
     var retries = parseInt(sessionStorage.getItem(KEY) || '0');
     if (retries >= 2) return; // máximo 2 recargas automáticas por sesión
 
@@ -126,8 +126,16 @@
         </button>
       </form>
 
+      <!-- Ver resultados sin encuesta -->
+      <div class="text-center mt-4">
+        <button id="btn-resultados-publicos"
+          class="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold py-2.5 rounded-xl transition-colors text-sm">
+          📊 Ver resultados en vivo
+        </button>
+      </div>
+
       <!-- Acceso administrador -->
-      <div class="text-center mt-6 pt-4 border-t border-gray-100">
+      <div class="text-center mt-4 pt-4 border-t border-gray-100">
         <button id="btn-admin-login"
           class="text-xs text-gray-400 hover:text-udes-rojo transition-colors">
           Acceso administrador
@@ -425,10 +433,20 @@
               <option value="">Todos</option>
             </select>
           </div>
-          <a id="btn-sheets-link" href="#" target="_blank"
-            class="ml-auto bg-green-600 text-white text-sm font-bold px-4 py-1.5 rounded-lg hover:bg-green-700 transition-colors no-underline hidden">
-            📊 Ver Google Sheets
-          </a>
+          <div class="ml-auto flex items-center gap-2 flex-wrap">
+            <button id="btn-export-tarjetas"
+              class="bg-indigo-600 text-white text-sm font-bold px-4 py-1.5 rounded-lg hover:bg-indigo-700 transition-colors">
+              ⬇ CSV Tarjetas
+            </button>
+            <button id="btn-export-encuesta"
+              class="bg-teal-600 text-white text-sm font-bold px-4 py-1.5 rounded-lg hover:bg-teal-700 transition-colors">
+              ⬇ CSV Cuestionario
+            </button>
+            <a id="btn-sheets-link" href="#" target="_blank"
+              class="bg-green-600 text-white text-sm font-bold px-4 py-1.5 rounded-lg hover:bg-green-700 transition-colors no-underline hidden">
+              📊 Ver Google Sheets
+            </a>
+          </div>
         </div>
       </div>
 
@@ -467,8 +485,8 @@
   </div>
 
   <!-- Scripts -->
-  <script src="config.js?v=3"></script>
-  <script src="app.js?v=3"></script>
-  <script src="admin.js?v=3"></script>
+  <script src="config.js?v=4"></script>
+  <script src="app.js?v=4"></script>
+  <script src="admin.js?v=4"></script>
 </body>
 </html>
